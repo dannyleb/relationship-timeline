@@ -358,9 +358,10 @@
                           background: printMode ? "#fff" : (isExpanded ? cat.bg : "#141310"),
                           transition: "all 0.15s",
                           pageBreakInside: "avoid", breakInside: "avoid",
+                          overflow: isExpanded ? "visible" : "hidden",
                         }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: isExpanded ? 8 : 0 }}>
-                            <div style={{ flex: 1 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: printMode ? 11 : 10, color: printMode ? "#888" : "#5a5550", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>
                                 {event.period}
                               </div>
@@ -369,7 +370,7 @@
                               </div>
                             </div>
                             <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                              <span style={{ fontSize: 10, color: cat.color, background: printMode ? `${cat.color}18` : cat.bg, padding: "2px 7px", borderRadius: 3, letterSpacing: "0.08em" }}>
+                              <span style={{ fontSize: 10, color: cat.color, background: printMode ? `${cat.color}18` : cat.bg, padding: "2px 7px", borderRadius: 3, letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
                                 {cat.label}
                               </span>
                               {!printMode && <span style={{ color: "#444", fontSize: 12 }}>{isExpanded ? "▲" : "▼"}</span>}
@@ -381,7 +382,10 @@
                               color: printMode ? "#333" : "#a09880",
                               lineHeight: 1.7, fontFamily: "Georgia, serif",
                               borderTop: `1px solid ${printMode ? "#eee" : "#222"}`,
-                              paddingTop: 8, whiteSpace: "pre-line",
+                              paddingTop: 8,
+                              whiteSpace: "pre-wrap",
+                              wordWrap: "break-word",
+                              overflow: "visible",
                             }}>
                               {event.body}
                               
@@ -425,6 +429,7 @@
                                             cursor: "pointer",
                                             transition: "all 0.15s ease",
                                             fontWeight: 500,
+                                            whiteSpace: "nowrap",
                                           }}
                                           onMouseEnter={(e) => {
                                             e.currentTarget.style.borderColor = relCat.color + "cc";
