@@ -187,7 +187,15 @@
         setTimeout(() => {
           const element = eventRefs.current[relatedId];
           if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "start" });
+            // Get header height to account for sticky nav
+            const headerHeight = 120; // approximate height of sticky header
+            const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+            const offsetPosition = elementPosition - headerHeight;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: "smooth"
+            });
           }
         }, 50);
       };
