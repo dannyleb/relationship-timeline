@@ -10,163 +10,191 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #0e0d0c; }
+    .related-chip:hover { opacity: 0.8; transform: translateY(-1px); }
+    .event-card:hover { border-color: #333 !important; }
+    @keyframes highlight-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(200,180,140,0.5); }
+      50%  { box-shadow: 0 0 0 6px rgba(200,180,140,0.15); }
+      100% { box-shadow: 0 0 0 0 rgba(200,180,140,0); }
+    }
+    .highlight-flash { animation: highlight-pulse 0.9s ease-out; }
     @media print {
       body { background: #fff !important; }
       .no-print { display: none !important; }
-      .print-expand { display: block !important; }
     }
   </style>
 </head>
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    const { useState, useRef, useEffect } = React;
+    const { useState, useCallback } = React;
 
     const CATEGORIES = {
-      MILESTONE: { label: "Milestone", color: "#7eb8a4", bg: "rgba(126,184,164,0.12)" },
-      RUPTURE:   { label: "Rupture",   color: "#c96a5a", bg: "rgba(201,106,90,0.12)"  },
-      PATTERN:   { label: "Pattern",   color: "#c4944a", bg: "rgba(196,148,74,0.12)"  },
-      CRISIS:    { label: "Crisis",    color: "#a04060", bg: "rgba(160,64,96,0.14)"   },
-      REPAIR:    { label: "Repair",    color: "#6a8fc4", bg: "rgba(106,143,196,0.12)" },
-      STRESSOR:  { label: "Stressor",  color: "#888888", bg: "rgba(136,136,136,0.10)" },
-      UNRESOLVED:{ label: "Unresolved",color: "#b07ad4", bg: "rgba(176,122,212,0.12)" },
+      MILESTONE:  { label: "Milestone",  color: "#7eb8a4", bg: "rgba(126,184,164,0.12)" },
+      RUPTURE:    { label: "Rupture",    color: "#c96a5a", bg: "rgba(201,106,90,0.12)"  },
+      PATTERN:    { label: "Pattern",    color: "#c4944a", bg: "rgba(196,148,74,0.12)"  },
+      CRISIS:     { label: "Crisis",     color: "#a04060", bg: "rgba(160,64,96,0.14)"   },
+      REPAIR:     { label: "Repair",     color: "#6a8fc4", bg: "rgba(106,143,196,0.12)" },
+      STRESSOR:   { label: "Stressor",   color: "#888888", bg: "rgba(136,136,136,0.10)" },
+      UNRESOLVED: { label: "Unresolved", color: "#b07ad4", bg: "rgba(176,122,212,0.12)" },
     };
 
     const CATEGORY_ORDER = ["MILESTONE","RUPTURE","PATTERN","CRISIS","REPAIR","STRESSOR","UNRESOLVED"];
 
     const events = [
-      { id:1,  year:"2013", period:"Summer 2013",      title:"First Meeting — Boston Music Scene",                    category:"MILESTONE",  body:"Immediate mutual attraction. Danny asks Nikki on a [...]" },
-      { id:2,  year:"2013", period:"Summer 2013",      title:"Black Sabbath — Second Date. Sparks Fly.",              category:"MILESTONE",  body:"Strong physical and emotional pull. Fresh love. Hea[...]" },
-      { id:3,  year:"2013", period:"Summer 2013",      title:"\"Buddies\" — First Dagger",                            category:"RUPTURE",    body:"Nikki jokes they're \"just buddies.\" Danny takes i[...]" },
-      { id:4,  year:"2013", period:"Summer 2013",      title:"Bar Night — First Manipulation Cycle",                  category:"PATTERN",    body:"Danny feels abandoned at a bar when Nikki mingles. [...]" },
-      { id:5,  year:"2013", period:"Summer 2013",      title:"Jukebox Incident — Danny Leaves, Nikki Declares Love",  category:"RUPTURE",    body:"Nikki jokes about music deeply personal to Danny. H[...]" },
-      { id:6,  year:"2013", period:"Summer 2013",      title:"The Phil Lie — First Major Betrayal",                   category:"RUPTURE",    body:"The morning after, Nikki tells Danny nothing happen[...]" },
-      { id:7,  year:"2013", period:"Late 2013",        title:"Codependence Begins",                                    category:"PATTERN",    body:"Danny soothes Nikki after the Phil fallout rather th[...]" },
-      { id:8,  year:"2014", period:"2014",             title:"Danny Moves In With Nikki — Sacrifices His Life",       category:"STRESSOR",   body:"Nikki needs to move quickly due to a toxic roommate[...]" },
-      { id:9,  year:"2014", period:"2014–2016",        title:"The Core Cycle Establishes",                            category:"PATTERN",    body:"Opposite schedules: Danny works days, Nikki works n[...]" },
-      { id:10, year:"2014", period:"2014–2016",        title:"Nikki's Drunk Make-Outs — Danny Stuffs It",             category:"RUPTURE",    body:"Nikki, drunk and emotionally unfed, makes out wit[...]" },
-      { id:11, year:"2016", period:"~2016",            title:"Phil Truth Revealed — Years-Old Lie Surfaces",          category:"RUPTURE",    body:"Nikki finally admits she did sleep with Phil the ni[...]" },
-      { id:12, year:"2016", period:"2016–2018",        title:"Depression, Heavy Drinking, Social Facade",             category:"CRISIS",     body:"Nikki has one foot out the door for approximately s[...]" },
-      { id:13, year:"2017", period:"2017–2018",        title:"Second Apartment — More Suburban, More Pressure",       category:"PATTERN",    body:"They move to a larger apartment, closer to Danny'[...]" },
-      { id:14, year:"2018", period:"2018",             title:"Drunk Fight Cycle — Repeated",                          category:"PATTERN",    body:"Recurring pattern: they get drunk, fight, Nikki thr[...]" },
-      { id:15, year:"2018", period:"2018",             title:"Brief Couples Therapy — First Attempt",                 category:"REPAIR",     body:"They enter couples therapy briefly. Multiple attemp[...]" },
-      { id:16, year:"2018", period:"2018",             title:"The Travel Dispute — Money Fault Line",                 category:"UNRESOLVED", body:"Major fight about never having taken a real vacatio[...]" },
-      { id:17, year:"2018", period:"Late 2018",        title:"Engagement",                                            category:"MILESTONE",  body:"They get engaged. It is genuinely joyful. Both are ha[...]" },
-      { id:18, year:"2019", period:"Jan 2019",         title:"First Sobriety — Both Commit",                          category:"REPAIR",     body:"They go sober together. Danny holds it. Nikki break[...]" },
-      { id:19, year:"2019", period:"2019",             title:"Europe Trip — Danny's Sobriety Broken by Pressure",     category:"RUPTURE",    body:"Nikki pressures Danny to drink at a pub in London. [...]" },
-      { id:20, year:"2019", period:"2019",             title:"Wedding Planning — Contention and Family Trauma",       category:"STRESSOR",   body:"Nikki manages nearly all of the planning — a mass[...]" },
-      { id:21, year:"2019", period:"Sept 2019",        title:"Wedding & Honeymoon — Beautiful",                       category:"MILESTONE",  body:"The wedding is beautiful. The honeymoon is beautifu[...]" },
-      { id:22, year:"2020", period:"Jan 1, 2020",      title:"Sobriety — Second Commitment",                          category:"REPAIR",     body:"They stop drinking on New Year's Day 2020 and hold [...]" },
-      { id:23, year:"2020", period:"2020",             title:"Pandemic, House Hunt, Cross-Country Trip to NM",        category:"STRESSOR",   body:"Pandemic hits. They chase low interest rates, travel [...]" },
-      { id:24, year:"2020", period:"Late 2020",        title:"Move to Upstate NY — Danny's Dream",                    category:"MILESTONE",  body:"New condo. Near Nikki's family. Sober. Wholesome. S[...]" },
-      { id:25, year:"2020", period:"2020",             title:"Trying to Conceive",                                    category:"MILESTONE",  body:"They begin trying to have a child. Hope and excitemen[...]" },
-      { id:26, year:"2021", period:"2021",             title:"Two Miscarriages",                                      category:"CRISIS",     body:"Nikki suffers two miscarriages. Devastating. She goes[...]" },
-      { id:27, year:"2021", period:"2021",             title:"Danny Begins Therapy with Greg",                        category:"REPAIR",     body:"First sustained individual therapy for Danny." },
-      { id:28, year:"2021", period:"Dec 2021",         title:"Pregnant — Connection and Hope",                        category:"MILESTONE",  body:"They become pregnant. The pregnancy is beautiful. D[...]" },
-      { id:29, year:"2022", period:"Sept 2022",        title:"Jackson Born — Then Immediate Crisis",                  category:"CRISIS",     body:"Jackson is born. Nikki's abrupt removal from SSRIs [...]" },
-      { id:30, year:"2022", period:"Oct 2022",         title:"Danny Laid Off During Parental Leave",                  category:"STRESSOR",   body:"Two weeks after Jackson is born, Danny is laid off. H[...]" },
-      { id:31, year:"2022", period:"Late 2022–2023",   title:"Nikki's Extended Crisis Recovery",                      category:"CRISIS",     body:"Nikki slowly assembles the right medical team and m[...]" },
-      { id:32, year:"2023", period:"Feb 2023",         title:"Danny Lands New Job",                                   category:"MILESTONE",  body:"Financial crisis stabilizes. Danny is now working fro[...]" },
-      { id:33, year:"2023", period:"2023",             title:"Nikki Diagnosed: Bipolar, ADHD, PTSD, Executive Function Disorder", category:"STRESSOR", body:"Formal diagnoses arrive. For Danny, this is[...]" },
-      { id:34, year:"2023", period:"2023",             title:"Home Responsibility Imbalance — Years of Built Resentment", category:"UNRESOLVED", body:"Danny has long carried the full weight of finan[...]" },
-      { id:35, year:"2024", period:"Sept 2024",        title:"Danny's Father Dies",                                   category:"CRISIS",     body:"Danny's dad passes away. Danny becomes the family roc[...]" },
-      { id:36, year:"2024", period:"2024",             title:"Housing Market — Emotionally Draining Search",          category:"STRESSOR",   body:"Active house search. Low inventory. Emotionally exh[...]" },
-      { id:37, year:"2024", period:"Nov 2024",         title:"Nikki Buys 8 Acres of Land",                            category:"STRESSOR",   body:"Nikki finds and purchases 8 acres. All-in focus for t[...]" },
-      { id:38, year:"2024", period:"Dec 2024",         title:"Sign on New Build Lot",                                 category:"MILESTONE",  body:"Nikki finds an open lot in a new subdivision. They si[...]" },
-      { id:39, year:"2025", period:"Jan–Feb 2025",     title:"Nikki's Manic Episode — Wants Separation",              category:"CRISIS",     body:"Nikki's manic episode escalates. Frustrated by Da[...]" },
-      { id:40, year:"2025", period:"Feb 2025",         title:"Kurt — Nikki's Ex Re-enters",                           category:"CRISIS",     body:"Nikki begins spending time with Kurt, an ex-boyfrie[...]" },
-      { id:41, year:"2025", period:"Late Feb 2025",    title:"Danny Joins Dating Apps — ENM Imposed",                 category:"CRISIS",     body:"Out of desperation, Danny joins Tinder to level the[...]" },
-      { id:42, year:"2025", period:"Early March 2025", title:"Danny Matches with Wanda",                              category:"RUPTURE",    body:"Danny matches with Wanda on Tinder. Within a week he [...]" },
-      { id:43, year:"2025", period:"Mid-March 2025",   title:"Danny Sleeps with Wanda / Nikki Sleeps with Kurt — Same Night", category:"RUPTURE", body:"Danny has plans to meet Wanda. Nikki is in Bos[...]" },
-      { id:44, year:"2025", period:"March 2025",       title:"4-Week Wanda Back-and-Forth",                           category:"RUPTURE",    body:"Nikki cycles hot and cold about Wanda 4–5 times ove[...]" },
-      { id:45, year:"2025", period:"Late March 2025",  title:"Danny Pushes for Polyamory",                            category:"RUPTURE",    body:"Danny researches poly relationships and pressures Nik[...]" },
-      { id:46, year:"2025", period:"End of March 2025",title:"The Final Night — Full System Collapse",                category:"CRISIS",     body:"Danny is at Wanda's for dinner (their 4th meeting).[...]" },
-      { id:47, year:"2025", period:"April 2025",       title:"Danny Cuts Wanda Off — Healing Begins",                category:"REPAIR",     body:"Danny ends contact with Wanda. They begin the healin[...]" },
-      { id:48, year:"2025", period:"April–May 2025",   title:"The Wanda Friendship Attempt — Opens, Then Closes Again",category:"RUPTURE",  body:"Danny tells Nikki he wants to remain friends with [...]" },
-      { id:49, year:"2025", period:"April–Nov 2025",   title:"The Lie — Danny Misses Wanda for 10 Months",           category:"UNRESOLVED", body:"Nikki repeatedly asks if Danny is still thinking a[...]" },
-      { id:50, year:"2025", period:"Dec 2025",         title:"Chance Encounter — Wanda at the Truck Stop",           category:"RUPTURE",    body:"Danny is driving solo to Massachusetts for band rehe[...]" },
-      { id:51, year:"2025", period:"Dec 2025",         title:"Danny Tells Nikki — Truck Stop Confession",            category:"CRISIS",     body:"Two days later, Danny tells Nikki about the encounte[...]" },
-      { id:52, year:"2025", period:"Dec 2025",         title:"Danny Asks to Meet Wanda One Last Time",               category:"CRISIS",     body:"Danny spends two weeks in rumination and tells Nikki h[...]" },
-      { id:53, year:"2025", period:"Mid-Dec 2025",     title:"Final Meeting with Wanda",                             category:"RUPTURE",    body:"Danny meets Wanda at a restaurant. Nikki is at home, c[...]" },
-      { id:54, year:"2025", period:"Late Dec 2025",    title:"The Shower — Danny Admits He Felt Love for Wanda",     category:"CRISIS",     body:"A week after the meeting, Nikki finds Danny in the s[...]" },
-      { id:55, year:"2026", period:"Jan–Apr 2026",     title:"Back to Status Quo — Cycle Resumes",                   category:"PATTERN",    body:"They try to patch things up. Danny falls back into[...]" },
-      { id:56, year:"2026", period:"May 2026",         title:"Nikki Off SSRIs — Full Breakdown / Full Honesty",      category:"CRISIS",     body:"Nikki transitions off her SSRI due to severe withdra[...]" },
-      { id:57, year:"2026", period:"May 2026",         title:"Present — Entering Therapy with Full Transparency",    category:"REPAIR",     body:"Danny and Nikki are in an acutely sensitive place. N[...]" },
+      { id:1,  year:"2013", period:"Summer 2013",       title:"First Meeting — Boston Music Scene",                        category:"MILESTONE",  related:[2,7],
+        body:"Immediate mutual attraction. Danny asks Nikki on a date. First date is quick — Nikki seems distracted and uninterested." },
+      { id:2,  year:"2013", period:"Summer 2013",       title:"Black Sabbath — Second Date. Sparks Fly.",                  category:"MILESTONE",  related:[1,3,4],
+        body:"Strong physical and emotional pull. Fresh love. Heavy drinking. Both are all-in. Danny picks Nikki up after bar shifts at 1am. They stay out all night. Young love exploding." },
+      { id:3,  year:"2013", period:"Summer 2013",       title:"\"Buddies\" — First Dagger",                                category:"RUPTURE",    related:[4,5,9],
+        body:"Nikki jokes they're \"just buddies.\" Danny takes it personally, goes quiet, withdraws. First experience of emotional withdrawal as self-protection. Nikki tries to pull him back." },
+      { id:4,  year:"2013", period:"Summer 2013",       title:"Bar Night — First Manipulation Cycle",                      category:"PATTERN",    related:[3,5,7,14],
+        body:"Danny feels abandoned at a bar when Nikki mingles. He leaves without warning. She calls immediately. He returns, sulks but feels relief that she pursued him. They go home together.\n\nDanny recognizes this later as a learned manipulation: manufacturing abandonment to force Nikki to prove herself. His only known way to get emotional feedback." },
+      { id:5,  year:"2013", period:"Summer 2013",       title:"Jukebox Incident — Danny Leaves, Nikki Declares Love",      category:"RUPTURE",    related:[6,3,4],
+        body:"Nikki jokes about music deeply personal to Danny. He gets upset and leaves without explanation. She chases him down the street and tells him she is in love with him. He is too angry to respond. She runs — and goes back to Phil, the man she was seeing before Danny. They were not yet officially together." },
+      { id:6,  year:"2013", period:"Summer 2013",       title:"The Phil Lie — First Major Betrayal",                       category:"RUPTURE",    related:[5,11,46],
+        body:"The morning after, Nikki tells Danny nothing happened with Phil. Danny believes her. Two to three years later, Nikki admits they did sleep together that night. Danny had spent years in denial.\n\nThis becomes a foundational wound: Danny learned that expressing emotions in his only known way would be punished, and that Nikki would not always be safe with the truth." },
+      { id:7,  year:"2013", period:"Late 2013",         title:"Codependence Begins",                                        category:"PATTERN",    related:[4,6,9],
+        body:"Danny soothes Nikki after the Phil fallout rather than expressing his own hurt. He turns pain inward and maintains control through her guilt. Nikki warned Danny early on that she was emotionally damaged. He dismissed it — he was already falling in love." },
+      { id:8,  year:"2014", period:"2014",              title:"Danny Moves In With Nikki — Sacrifices His Life",            category:"STRESSOR",   related:[9,34],
+        body:"Nikki needs to move quickly due to a toxic roommate. Danny leaves his best friend and roommate stranded with no notice — a major fallout. He moves into a small, downgraded apartment near her work, further from his friends and his own life. He decides her needs come first. This begins years of self-erasure." },
+      { id:9,  year:"2014", period:"2014–2016",         title:"The Core Cycle Establishes",                                 category:"PATTERN",    related:[4,7,10,14],
+        body:"Opposite schedules: Danny works days, Nikki works nights and parties. Danny loses touch with his own friends. Cycle: Danny withdraws emotionally → Nikki feels unloved → Nikki escapes to nightlife → Danny's abandonment wounds trigger → Danny withdraws further." },
+      { id:10, year:"2014", period:"2014–2016",         title:"Nikki's Drunk Make-Outs — Danny Stuffs It",                  category:"RUPTURE",    related:[9,11,14],
+        body:"Nikki, drunk and emotionally unfed, makes out with strangers at parties on multiple occasions. She admits each shortly after. Danny does not express disgust or pain. He pushes all feelings down and moves on. Resentment accumulates silently. This pattern of swallowing hurt instead of expressing it becomes defining." },
+      { id:11, year:"2016", period:"~2016",             title:"Phil Truth Revealed — Years-Old Lie Surfaces",               category:"RUPTURE",    related:[6,5,10,46],
+        body:"Nikki finally admits she did sleep with Phil the night Danny refused to say 'I love you' back. Danny had spent years in denial. This confirmation is a devastating second blow from the original betrayal. He buries it again rather than processing it. Distrust hardens beneath the surface." },
+      { id:12, year:"2016", period:"2016–2018",         title:"Depression, Heavy Drinking, Social Facade",                  category:"CRISIS",     related:[9,13,14,15],
+        body:"Nikki has one foot out the door for approximately six years. Danny descends into depression. Both drink heavily. Danny drinks alone — soothing with alcohol, junk food, video games. He gains significant weight and develops an alcohol dependency. They maintain a convincing social facade at gatherings while the relationship deteriorates privately." },
+      { id:13, year:"2017", period:"2017–2018",         title:"Second Apartment — More Suburban, More Pressure",            category:"PATTERN",    related:[12,14,33],
+        body:"They move to a larger apartment, closer to Danny's idea of a wholesome life. Nikki's partying escalates dramatically — out until 6–7am nearly every night. Undiagnosed bipolar mania begins to surface visibly. Cycle intensifies: mania → party crash → Danny caretakes → recovery → escape again." },
+      { id:14, year:"2018", period:"2018",              title:"Drunk Fight Cycle — Repeated",                               category:"PATTERN",    related:[9,12,13,55],
+        body:"Recurring pattern: they get drunk, fight, Nikki threatens to leave, Danny promises the world and all the love she deserves — then everything slides back to status quo. Danny goes numb again. Nikki seeks comfort in parties and friends." },
+      { id:15, year:"2018", period:"2018",              title:"Brief Couples Therapy — First Attempt",                      category:"REPAIR",     related:[14,18,27],
+        body:"They enter couples therapy briefly. Multiple attempts to quit drinking. Both efforts collapse. They quit therapy and continue drinking." },
+      { id:16, year:"2018", period:"2018",              title:"The Travel Dispute — Money Fault Line",                      category:"UNRESOLVED", related:[34,20],
+        body:"Major fight about never having taken a real vacation. Root cause: Danny's rigid financial discipline vs. Nikki's desire to live now. Nikki carries deep trauma around money conversations. Danny has spent years feeling alone in financial planning, which feeds martyrdom and reactive resentment. This fault line runs through the entire relationship." },
+      { id:17, year:"2018", period:"Late 2018",         title:"Engagement",                                                 category:"MILESTONE",  related:[18,20,21],
+        body:"They get engaged. It is genuinely joyful. Both are happy." },
+      { id:18, year:"2019", period:"Jan 2019",          title:"First Sobriety — Both Commit",                               category:"REPAIR",     related:[15,19,22],
+        body:"They go sober together. Danny holds it. Nikki breaks sobriety several times with friends but makes a genuine effort." },
+      { id:19, year:"2019", period:"2019",              title:"Europe Trip — Danny's Sobriety Broken by Pressure",          category:"RUPTURE",    related:[18,22],
+        body:"Nikki pressures Danny to drink at a pub in London. He gives in despite not wanting to. Both get massively hungover for the rest of the trip. Danny stuffs the resentment. Does not express it." },
+      { id:20, year:"2019", period:"2019",              title:"Wedding Planning — Contention and Family Trauma",            category:"STRESSOR",   related:[17,21,16],
+        body:"Nikki manages nearly all of the planning — a massive undertaking she handles with skill. Friction throughout over Danny's spending restraint. Wedding hosted on his parents' property — their offer, but ultimately too much for them. Leads to emotional outbursts from Danny's family, escalating inter-personal conflict, and a severing of trust between Danny and his sister. Danny tries to keep peace on all sides via codependence. Stuffs all of it." },
+      { id:21, year:"2019", period:"Sept 2019",         title:"Wedding & Honeymoon — Beautiful",                            category:"MILESTONE",  related:[17,20,22],
+        body:"The wedding is beautiful. The honeymoon is beautiful. The day after they wed, both return hard to drinking. Sept–Dec 2019: full relapse." },
+      { id:22, year:"2020", period:"Jan 1, 2020",       title:"Sobriety — Second Commitment",                               category:"REPAIR",     related:[18,21,24],
+        body:"They stop drinking on New Year's Day 2020 and hold it." },
+      { id:23, year:"2020", period:"2020",              title:"Pandemic, House Hunt, Cross-Country Trip to NM",             category:"STRESSOR",   related:[24],
+        body:"Pandemic hits. They chase low interest rates, travel across the country to New Mexico as part of a house search. They ultimately give up and decide to move to upstate NY — near Nikki's family. A new chapter begins." },
+      { id:24, year:"2020", period:"Late 2020",         title:"Move to Upstate NY — Danny's Dream",                         category:"MILESTONE",  related:[22,23,25],
+        body:"New condo. Near Nikki's family. Sober. Wholesome. Space and nature after years in the city. Dog. Truck. Danny rides horses, adapts to country life. It is genuinely wonderful.\n\nDanny's unprocessed resentments still live deep within — repressed, not resolved." },
+      { id:25, year:"2020", period:"2020",              title:"Trying to Conceive",                                         category:"MILESTONE",  related:[26,28],
+        body:"They begin trying to have a child. Hope and excitement." },
+      { id:26, year:"2021", period:"2021",              title:"Two Miscarriages",                                           category:"CRISIS",     related:[25,27,28],
+        body:"Nikki suffers two miscarriages. Devastating. She goes all-in mentally and emotionally. Danny begins individual therapy with Greg around this time." },
+      { id:27, year:"2021", period:"2021",              title:"Danny Begins Therapy with Greg",                             category:"REPAIR",     related:[26,15,57],
+        body:"First sustained individual therapy for Danny." },
+      { id:28, year:"2021", period:"Dec 2021",          title:"Pregnant — Connection and Hope",                             category:"MILESTONE",  related:[25,26,29],
+        body:"They become pregnant. The pregnancy is beautiful. Danny is fully engaged — doing the work, learning, supporting. They are genuinely connected and present. One of the clearest periods of alignment in the relationship." },
+      { id:29, year:"2022", period:"Sept 2022",         title:"Jackson Born — Then Immediate Crisis",                       category:"CRISIS",     related:[28,30,31],
+        body:"Jackson is born. Nikki's abrupt removal from SSRIs during pregnancy leads to an extreme post-partum hormonal crash. She rapidly descends into a psychiatric crisis requiring hospitalization and crisis intervention. Danny has never been more afraid." },
+      { id:30, year:"2022", period:"Oct 2022",          title:"Danny Laid Off During Parental Leave",                       category:"STRESSOR",   related:[29,32,35],
+        body:"Two weeks after Jackson is born, Danny is laid off. He is the sole provider. Nikki is in active psychiatric crisis. New levels of fear, financial stress, and existential dread. Caretaking via codependence reaches new heights. Danny becomes the only fully functioning adult in the household." },
+      { id:31, year:"2022", period:"Late 2022–2023",    title:"Nikki's Extended Crisis Recovery",                           category:"CRISIS",     related:[29,33,39],
+        body:"Nikki slowly assembles the right medical team and medication. Returns to SSRIs. Manic behavior begins cropping up again. The newborn stage is extremely intense. Heavy reliance on Nikki's mother for childcare. Danny carries enormous guilt about leaning on his mother-in-law." },
+      { id:32, year:"2023", period:"Feb 2023",          title:"Danny Lands New Job",                                        category:"MILESTONE",  related:[30],
+        body:"Financial crisis stabilizes. Danny is now working from home as sole provider with a newborn and a wife in recovery." },
+      { id:33, year:"2023", period:"2023",              title:"Nikki Diagnosed: Bipolar, ADHD, PTSD, Executive Function Disorder", category:"STRESSOR", related:[31,34,39],
+        body:"Formal diagnoses arrive. For Danny, this is a grief event: a quiet death of hope for a future where domestic responsibilities might someday be shared equally. He accepts it but carries deep sadness about what this means long-term — for her, for him, and for Jackson." },
+      { id:34, year:"2023", period:"2023",              title:"Home Responsibility Imbalance — Years of Built Resentment",  category:"UNRESOLVED", related:[8,16,33],
+        body:"Danny has long carried the full weight of finances, planning, admin, cleaning, shopping, and laundry. He stuffs resentment instead of expressing it with kindness and courage, which causes it to come out as outbursts. This has eroded Nikki's self-worth severely.\n\nShe develops a belief that Danny only values her if she contributes financially — this pressure causes her to focus on income instead of being present as a mother, which costs more in outsourced childcare than she earns." },
+      { id:35, year:"2024", period:"Sept 2024",         title:"Danny's Father Dies",                                        category:"CRISIS",     related:[30,55],
+        body:"Danny's dad passes away. Danny becomes the family rock — supporting his mother and sister. He does not process his own grief. He returns home, stuffs it all down, returns to normal life. The pressure cooker inside him is now close to bursting." },
+      { id:36, year:"2024", period:"2024",              title:"Housing Market — Emotionally Draining Search",               category:"STRESSOR",   related:[37,38],
+        body:"Active house search. Low inventory. Emotionally exhausting for both." },
+      { id:37, year:"2024", period:"Nov 2024",          title:"Nikki Buys 8 Acres of Land",                                 category:"STRESSOR",   related:[36,38],
+        body:"Nikki finds and purchases 8 acres. All-in focus for two months. Ultimately abandoned due to high build costs. Land is sold back to the original owners." },
+      { id:38, year:"2024", period:"Dec 2024",          title:"Sign on New Build Lot",                                      category:"MILESTONE",  related:[37,36],
+        body:"Nikki finds an open lot in a new subdivision. They sign. Forward momentum resumes." },
+      { id:39, year:"2025", period:"Jan–Feb 2025",      title:"Nikki's Manic Episode — Wants Separation",                   category:"CRISIS",     related:[33,40,41,31],
+        body:"Nikki's manic episode escalates. Frustrated by Danny's continued emotional unavailability, she wants to separate. Plans to return to Boston and reconnect with the musician social world she came from." },
+      { id:40, year:"2025", period:"Feb 2025",          title:"Kurt — Nikki's Ex Re-enters",                                category:"CRISIS",     related:[39,41,43],
+        body:"Nikki begins spending time with Kurt, an ex-boyfriend. Brought to couples therapy with Greg. She goes to Boston and calls Danny saying she wants to lift physical boundaries with Kurt.\n\nDanny is blindsided. He enters the deepest emotional crisis of his life. Over a decade of buried resentments, unexpressed needs, and the feeling of being a prisoner while Nikki has been free — it all reaches a breaking point. He has no one to tell. He maintains a facade for Jackson, family, and friends while completely shattered inside." },
+      { id:41, year:"2025", period:"Late Feb 2025",     title:"Danny Joins Dating Apps — ENM Imposed",                      category:"CRISIS",     related:[40,42,9],
+        body:"Out of desperation, Danny joins Tinder to level the playing field. Nikki has no trouble finding matches. Danny struggles — deepening abandonment feelings. In a panic, he insists they classify the relationship as ENM (Ethical Non-Monogamy), a concept he just discovered. Nikki doesn't want this but feels pressured and agrees.\n\nDanny begins starving himself, becomes obsessed with Tinder, hypersexualizes the ENM dynamic. It becomes the only way he can hold onto his wife while she goes out to be with other men." },
+      { id:42, year:"2025", period:"Early March 2025",  title:"Danny Matches with Wanda",                                   category:"RUPTURE",    related:[41,43,44],
+        body:"Danny matches with Wanda on Tinder. Within a week he feels seen, validated, and safe — able to present himself without the weight of shared history. He discloses the connection to Nikki per ENM agreement. Nikki immediately panics and demands he stop. Her goal in the separation was for Danny to chase her — not to form an emotional bond with someone new. Danny refuses to stop." },
+      { id:43, year:"2025", period:"Mid-March 2025",    title:"Danny Sleeps with Wanda / Nikki Sleeps with Kurt — Same Night", category:"RUPTURE", related:[42,44,46,6],
+        body:"Danny has plans to meet Wanda. Nikki is in Boston with Kurt. Nikki gives Danny permission. They each sleep with their respective person the same night. Danny tells Nikki the next day. Nikki discloses Kurt — then immediately brings up divorce attorneys out of fear.\n\nDanny feels completely blindsided. Wanda becomes his only source of comfort — the one place he feels seen, respected, free of history and baggage. He refuses to stop contact." },
+      { id:44, year:"2025", period:"March 2025",        title:"4-Week Wanda Back-and-Forth",                                category:"RUPTURE",    related:[42,43,45],
+        body:"Nikki cycles hot and cold about Wanda 4–5 times over a month. She asks Danny to pull back. Danny insists it's just a meaningful friendship. He tries to dial back; Wanda exerts subtle pressure; Danny people-pleases and continues.\n\nNikki is crashing — losing herself to the mania and the devastation of watching her husband bond emotionally with someone else as a result of her own attempt to wake him up." },
+      { id:45, year:"2025", period:"Late March 2025",   title:"Danny Pushes for Polyamory",                                 category:"RUPTURE",    related:[44,46],
+        body:"Danny researches poly relationships and pressures Nikki to open her mind to the idea. Nikki is devastated. She reluctantly agrees to try, saying she will attempt poly with Kurt. She does not want this." },
+      { id:46, year:"2025", period:"End of March 2025", title:"The Final Night — Full System Collapse",                     category:"CRISIS",     related:[45,43,11,47],
+        body:"Danny is at Wanda's for dinner (their 4th meeting). Nikki calls the moment he arrives — she's crashing, wants to come home. Danny tells her to come home and that he'll be there by the same time. He stays for dinner. He tells Wanda about poly. She accepts. They kiss. Danny goes home at 10pm.\n\nNikki crashes completely. She relapses, leaves Kurt's, finds Phil — the original source of Danny's foundational betrayal trauma. She and Phil get very drunk. She sleeps with Phil unprotected. He finishes inside her.\n\nThe next morning Nikki calls Danny in full dissociation — survival mode, burning everything down as both cope and weapon. Danny, in visceral pain and panic, messages Wanda that he wants to go deeper.\n\nGreg facilitates an emergency couples Zoom. Nikki returns home fully broken, heavily medicated. The manic episode crashes." },
+      { id:47, year:"2025", period:"April 2025",        title:"Danny Cuts Wanda Off — Healing Begins",                     category:"REPAIR",     related:[46,48],
+        body:"Danny ends contact with Wanda. They begin the healing process. Nikki is broken by the reality that Danny developed genuine feelings for another woman. Danny stuffs all unprocessed feelings — the Phil revelation, the crisis, the feelings for Wanda — and focuses entirely on supporting Nikki back to health." },
+      { id:48, year:"2025", period:"April–May 2025",    title:"The Wanda Friendship Attempt — Opens, Then Closes Again",    category:"RUPTURE",    related:[47,49],
+        body:"Danny tells Nikki he wants to remain friends with Wanda. Nikki reluctantly agrees after days of cycling. Danny reaches out. Wanda responds two weeks later, open to friendship. Danny shows Nikki. Nikki says no — it must end.\n\nDanny cuts Wanda off a second time. He then writes her one final message: an apology and an oblique acknowledgment that there are things he can't explain — because he had also lied to Wanda about the nature of the situation." },
+      { id:49, year:"2025", period:"April–Nov 2025",    title:"The Lie — Danny Misses Wanda for 10 Months",                category:"UNRESOLVED", related:[48,50,51,54],
+        body:"Nikki repeatedly asks if Danny is still thinking about Wanda — making clear this is the condition for physical and emotional safety between them. Danny says no. He is lying. He continues to think about Wanda and is protecting Nikki from the truth. The lie sits just beneath the surface of every intimate moment." },
+      { id:50, year:"2025", period:"Dec 2025",          title:"Chance Encounter — Wanda at the Truck Stop",                category:"RUPTURE",    related:[49,51],
+        body:"Danny is driving solo to Massachusetts for band rehearsal. Chance encounter with Wanda at a random truck stop. They talk briefly. He tells her he's sorry for bringing her into a messy situation, and that he thinks about it all the time. They part. She texts: she was too awestruck to invite him inside to talk. He replies: maybe someday, if the time is right, he could tell her the full story." },
+      { id:51, year:"2025", period:"Dec 2025",          title:"Danny Tells Nikki — Truck Stop Confession",                 category:"CRISIS",     related:[50,49,52],
+        body:"Two days later, Danny tells Nikki about the encounter. Nikki crumbles immediately. Her intuition had been telling her the entire time that Wanda was still present between them. Every night for months she had been waking up crying, asking Danny if she was safe. Every time he held her head and said yes. He was lying." },
+      { id:52, year:"2025", period:"Dec 2025",          title:"Danny Asks to Meet Wanda One Last Time",                    category:"CRISIS",     related:[51,53],
+        body:"Danny spends two weeks in rumination and tells Nikki he has a pull to the connection and wants to meet Wanda to give her the full truth and context. Nikki dissociates and gives permission. She even helps Danny write the letter. She accepts her husband wanting a final meeting with the woman who nearly destroyed their marriage." },
+      { id:53, year:"2025", period:"Mid-Dec 2025",      title:"Final Meeting with Wanda",                                  category:"RUPTURE",    related:[52,54],
+        body:"Danny meets Wanda at a restaurant. Nikki is at home, crushed, pretending to be okay. The meeting is awkward. Wanda is not warm. She tells Danny what his behavior put her through. He says he still found meaning in what they shared. She asks what he actually wants. He says friendship. She tells him: that's not what you're seeking, and I'm not confused about my feelings for you — you're the confused one. They part. Danny comes home sad." },
+      { id:54, year:"2025", period:"Late Dec 2025",     title:"The Shower — Danny Admits He Felt Love for Wanda",          category:"CRISIS",     related:[53,55,49],
+        body:"A week after the meeting, Nikki finds Danny in the shower, visibly depressed. She creates a safe space. Danny admits he felt a form of love for Wanda. He says: when I think about that, it feels good. He cries. He holds Nikki.\n\nFor three days, Danny sits with the open question of whether he could leave his family. He takes Nikki along for the ride — it is torture for both. At the end of three days, Nikki snaps with a ferocity he's never seen. She tells him she won't stand in the way if he genuinely wants to go. That breaks through.\n\nHe commits: I'm staying. I love Nikki. I can't live without her." },
+      { id:55, year:"2026", period:"Jan–Apr 2026",      title:"Back to Status Quo — Cycle Resumes",                        category:"PATTERN",    related:[54,9,14,35],
+        body:"They try to patch things up. Danny falls back into old habits — going inward, not expressing himself. Nikki is on hair-trigger, hypersensitive to any passive aggression or dismissal.\n\nThe experience has left Nikki with no sense of self-worth. She feels Danny is secretly comparing her to Wanda — someone free of health challenges, diagnoses, and shared baggage. She believes she will never be enough to earn Danny's unfiltered love. His love remains blocked by unprocessed resentments that have never been spoken." },
+      { id:56, year:"2026", period:"May 2026",          title:"Nikki Off SSRIs — Full Breakdown / Full Honesty",           category:"CRISIS",     related:[55,49,57],
+        body:"Nikki transitions off her SSRI due to severe withdrawal effects. Unmedicated for several days, she is extremely raw and reactive. She breaks down, pushes Danny, and demands to know what he did to make Wanda fall for him.\n\nThis forces Danny into a level of honesty he has withheld. He finally confirms: he was in fact thinking about and missing Wanda for the full first ten months before the December shower breakdown. He had lied throughout — holding Nikki in his arms every night while she cried and asked if she was safe.\n\nDanny commits to witnessing Nikki's pain without deflecting and to working through his resentments systematically rather than burying them." },
+      { id:57, year:"2026", period:"May 2026",          title:"Present — Entering Therapy with Full Transparency",         category:"REPAIR",     related:[56,27],
+        body:"Danny and Nikki are in an acutely sensitive place. Nikki has zero trust. Danny has a lifetime of unprocessed resentments blocking his ability to give her the love she needs. Both are committed to doing the work.\n\nThis timeline was created to share with their therapist so the full picture can be seen — systematically, without getting lost in the weeds — so that old emotional injuries can finally be resolved." },
     ];
 
+    const eventMap = Object.fromEntries(events.map(e => [e.id, e]));
     const YEARS = [...new Set(events.map(e => e.year))];
-
-    // Keywords for relationship detection
-    const KEYWORDS = {
-      wanda: ["Wanda", "wanda"],
-      kurt: ["Kurt", "kurt"],
-      phil: ["Phil", "phil"],
-      therapy: ["therapy", "Therapy", "therapist"],
-      sobriety: ["sober", "drinking", "alcohol", "drink", "drunk"],
-      jackson: ["Jackson", "jackson", "baby", "child", "pregnant", "pregnancy"],
-      house: ["house", "move", "apartment", "condo", "housing", "lot", "acres"],
-      crisis: ["crisis", "episode", "manic", "breakdown", "collapse"],
-      pattern: ["cycle", "pattern", "recurring", "repetitive"],
-    };
-
-    function findRelatedEvents(eventId, eventTitle, eventBody) {
-      const currentEvent = events.find(e => e.id === eventId);
-      if (!currentEvent) return [];
-
-      const related = [];
-      const titleLower = eventTitle.toLowerCase();
-      const bodyLower = eventBody.toLowerCase();
-
-      events.forEach(e => {
-        if (e.id === eventId) return; // Skip self
-
-        let score = 0;
-        const eTitleLower = e.title.toLowerCase();
-        const eBodyLower = e.body.toLowerCase();
-
-        // Check for keyword matches
-        Object.entries(KEYWORDS).forEach(([key, words]) => {
-          words.forEach(word => {
-            if ((titleLower.includes(word) || bodyLower.includes(word)) &&
-                (eTitleLower.includes(word) || eBodyLower.includes(word))) {
-              score += 3;
-            }
-          });
-        });
-
-        // Check for same category
-        if (e.category === currentEvent.category) {
-          score += 1;
-        }
-
-        // Check for temporal proximity (within 1 year)
-        const yearDiff = Math.abs(parseInt(e.year) - parseInt(currentEvent.year));
-        if (yearDiff === 0) score += 2;
-        if (yearDiff === 1) score += 1;
-
-        // Check for direct mentions
-        if (eTitleLower.includes(eventTitle.substring(0, 20).toLowerCase().replace(/[^a-z0-9]/g, ""))) {
-          score += 5;
-        }
-
-        if (score > 0) {
-          related.push({ ...e, score });
-        }
-      });
-
-      return related.sort((a, b) => b.score - a.score).slice(0, 5);
-    }
 
     function App() {
       const [activeFilters, setActiveFilters] = useState([]);
-      const [expandedId, setExpandedId] = useState(null);
+      const [expandedIds, setExpandedIds] = useState(new Set());
       const [printMode, setPrintMode] = useState(false);
-      const eventRefs = useRef({});
+      const [flashId, setFlashId] = useState(null);
 
       const toggleFilter = (cat) => {
         setActiveFilters(prev =>
           prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
         );
+      };
+
+      const toggleExpand = (id) => {
+        setExpandedIds(prev => {
+          const next = new Set(prev);
+          next.has(id) ? next.delete(id) : next.add(id);
+          return next;
+        });
+      };
+
+      const jumpToEvent = (id) => {
+        // Expand the target
+        setExpandedIds(prev => {
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
+        // Flash then scroll
+        setFlashId(id);
+        setTimeout(() => {
+          const el = document.getElementById(`event-${id}`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => setFlashId(null), 1000);
+        }, 80);
       };
 
       const filtered = activeFilters.length === 0
@@ -178,27 +206,6 @@
         if (evs.length > 0) acc[year] = evs;
         return acc;
       }, {});
-
-      const handleRelatedClick = (relatedId) => {
-        // Expand the related event
-        setExpandedId(relatedId);
-        
-        // Scroll to it after a brief delay to allow React to render
-        setTimeout(() => {
-          const element = eventRefs.current[relatedId];
-          if (element) {
-            // Get header height to account for sticky nav
-            const headerHeight = 120; // approximate height of sticky header
-            const elementPosition = element.getBoundingClientRect().top + window.scrollY;
-            const offsetPosition = elementPosition - headerHeight;
-            
-            window.scrollTo({
-              top: offsetPosition,
-              behavior: "smooth"
-            });
-          }
-        }, 50);
-      };
 
       return (
         <div style={{
@@ -215,8 +222,7 @@
             borderBottom: printMode ? "2px solid #111" : "1px solid #2a2720",
             padding: printMode ? "0 0 24px 0" : "28px 40px 20px",
             position: printMode ? "static" : "sticky",
-            top: 0,
-            zIndex: 100,
+            top: 0, zIndex: 100,
           }}>
             <div style={{ maxWidth: 860, margin: "0 auto" }}>
               {!printMode && (
@@ -225,16 +231,10 @@
                 </div>
               )}
               <h1 style={{
-                fontFamily: "'Georgia', serif",
-                fontStyle: "italic",
-                fontWeight: 400,
-                fontSize: printMode ? 28 : 24,
-                color: printMode ? "#111" : "#e8e2d8",
-                margin: "0 0 4px 0",
-                letterSpacing: "-0.01em",
-              }}>
-                Danny &amp; Nikki
-              </h1>
+                fontFamily: "'Georgia', serif", fontStyle: "italic", fontWeight: 400,
+                fontSize: printMode ? 28 : 24, color: printMode ? "#111" : "#e8e2d8",
+                margin: "0 0 4px 0", letterSpacing: "-0.01em",
+              }}>Danny &amp; Nikki</h1>
               <div style={{ fontSize: 12, color: printMode ? "#444" : "#6a6258", fontStyle: "italic" }}>
                 2013 – Present &middot; {events.length} events documented
               </div>
@@ -251,52 +251,47 @@
                         border: `1px solid ${active ? c.color : "#333"}`,
                         background: active ? c.bg : "transparent",
                         color: active ? c.color : "#666",
-                        fontSize: 11, cursor: "pointer",
-                        fontFamily: "Georgia, serif", transition: "all 0.15s",
-                      }}>
-                        {c.label}
-                      </button>
+                        fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif", transition: "all 0.15s",
+                      }}>{c.label}</button>
                     );
                   })}
                   {activeFilters.length > 0 && (
                     <button onClick={() => setActiveFilters([])} style={{
-                      padding: "3px 10px", borderRadius: 20,
-                      border: "1px solid #444", background: "transparent",
-                      color: "#888", fontSize: 11, cursor: "pointer",
-                      fontFamily: "Georgia, serif",
+                      padding: "3px 10px", borderRadius: 20, border: "1px solid #444",
+                      background: "transparent", color: "#888", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
                     }}>Clear</button>
                   )}
+                  <button onClick={() => { setExpandedIds(new Set(events.map(e=>e.id))); }} style={{
+                    padding: "3px 10px", borderRadius: 20, border: "1px solid #3a3530",
+                    background: "transparent", color: "#7a7060", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
+                  }}>Expand All</button>
+                  <button onClick={() => setExpandedIds(new Set())} style={{
+                    padding: "3px 10px", borderRadius: 20, border: "1px solid #3a3530",
+                    background: "transparent", color: "#7a7060", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
+                  }}>Collapse All</button>
                   <button onClick={() => setPrintMode(true)} style={{
                     marginLeft: "auto", padding: "4px 14px", borderRadius: 4,
                     border: "1px solid #3a3530", background: "#1e1c18",
-                    color: "#a09880", fontSize: 11, cursor: "pointer",
-                    fontFamily: "Georgia, serif",
-                  }}>
-                    Print / PDF View
-                  </button>
+                    color: "#a09880", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
+                  }}>Print / PDF View</button>
                 </div>
               )}
 
               {printMode && (
                 <div style={{ marginTop: 12 }}>
                   <button onClick={() => setPrintMode(false)} style={{
-                    padding: "6px 16px", border: "1px solid #999",
-                    background: "transparent", color: "#333",
-                    fontSize: 11, cursor: "pointer", marginRight: 8,
-                    fontFamily: "Georgia, serif",
+                    padding: "6px 16px", border: "1px solid #999", background: "transparent",
+                    color: "#333", fontSize: 11, cursor: "pointer", marginRight: 8, fontFamily: "Georgia, serif",
                   }}>← Back</button>
                   <button onClick={() => window.print()} style={{
-                    padding: "6px 16px", border: "1px solid #333",
-                    background: "#111", color: "#fff",
-                    fontSize: 11, cursor: "pointer",
-                    fontFamily: "Georgia, serif",
+                    padding: "6px 16px", border: "1px solid #333", background: "#111",
+                    color: "#fff", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
                   }}>Print / Save PDF</button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Print Legend */}
           {printMode && (
             <div style={{ maxWidth: 860, margin: "20px auto 0", display: "flex", flexWrap: "wrap", gap: 12 }}>
               {CATEGORY_ORDER.map(cat => {
@@ -318,8 +313,7 @@
                 <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: printMode ? 12 : 20 }}>
                   <div style={{
                     fontFamily: "Georgia, serif", fontWeight: 700,
-                    fontSize: printMode ? 20 : 22,
-                    color: printMode ? "#111" : "#f0ebe0",
+                    fontSize: printMode ? 20 : 22, color: printMode ? "#111" : "#f0ebe0",
                     letterSpacing: "-0.02em", minWidth: 60,
                   }}>{year}</div>
                   <div style={{ flex: 1, height: 1, background: printMode ? "#ccc" : "#2a2720" }} />
@@ -328,16 +322,13 @@
                 <div style={{ display: "flex", flexDirection: "column", gap: printMode ? 10 : 12, paddingLeft: printMode ? 0 : 8 }}>
                   {yearEvents.map(event => {
                     const cat = CATEGORIES[event.category];
-                    const isExpanded = expandedId === event.id || printMode;
-                    const relatedEvents = isExpanded ? findRelatedEvents(event.id, event.title, event.body) : [];
-                    
+                    const isExpanded = expandedIds.has(event.id) || printMode;
+                    const isFlashing = flashId === event.id;
                     return (
-                      <div 
-                        key={event.id} 
-                        ref={el => eventRefs.current[event.id] = el}
-                        onClick={() => !printMode && setExpandedId(isExpanded ? null : event.id)}
-                        style={{ display: "flex", gap: 0, cursor: printMode ? "default" : "pointer" }}>
-
+                      <div key={event.id} id={`event-${event.id}`}
+                        style={{ display: "flex", gap: 0 }}
+                        className={isFlashing ? "highlight-flash" : ""}
+                      >
                         {!printMode && (
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 24, marginRight: 16, flexShrink: 0 }}>
                             <div style={{
@@ -349,19 +340,25 @@
                           </div>
                         )}
 
-                        <div style={{
-                          flex: 1,
-                          border: printMode ? `1px solid ${cat.color}66` : `1px solid ${isExpanded ? cat.color + "44" : "#222"}`,
-                          borderLeft: `3px solid ${cat.color}`,
-                          borderRadius: printMode ? 4 : 6,
-                          padding: printMode ? "10px 14px" : "12px 16px",
-                          background: printMode ? "#fff" : (isExpanded ? cat.bg : "#141310"),
-                          transition: "all 0.15s",
-                          pageBreakInside: "avoid", breakInside: "avoid",
-                          overflow: isExpanded ? "visible" : "hidden",
-                        }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: isExpanded ? 8 : 0 }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          className="event-card"
+                          style={{
+                            flex: 1,
+                            border: printMode ? `1px solid ${cat.color}66` : `1px solid ${isExpanded ? cat.color+"44" : "#222"}`,
+                            borderLeft: `3px solid ${cat.color}`,
+                            borderRadius: printMode ? 4 : 6,
+                            padding: printMode ? "10px 14px" : "12px 16px",
+                            background: printMode ? "#fff" : (isExpanded ? cat.bg : "#141310"),
+                            transition: "all 0.15s",
+                            pageBreakInside: "avoid", breakInside: "avoid",
+                          }}
+                        >
+                          {/* Card header — clickable to expand */}
+                          <div
+                            onClick={() => !printMode && toggleExpand(event.id)}
+                            style={{ cursor: printMode ? "default" : "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: isExpanded ? 8 : 0 }}
+                          >
+                            <div style={{ flex: 1 }}>
                               <div style={{ fontSize: printMode ? 11 : 10, color: printMode ? "#888" : "#5a5550", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>
                                 {event.period}
                               </div>
@@ -370,93 +367,74 @@
                               </div>
                             </div>
                             <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                              <span style={{ fontSize: 10, color: cat.color, background: printMode ? `${cat.color}18` : cat.bg, padding: "2px 7px", borderRadius: 3, letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
+                              <span style={{ fontSize: 10, color: cat.color, background: printMode ? `${cat.color}18` : cat.bg, padding: "2px 7px", borderRadius: 3, letterSpacing: "0.08em" }}>
                                 {cat.label}
                               </span>
                               {!printMode && <span style={{ color: "#444", fontSize: 12 }}>{isExpanded ? "▲" : "▼"}</span>}
                             </div>
                           </div>
+
+                          {/* Expanded body */}
                           {isExpanded && (
-                            <div style={{
-                              fontSize: printMode ? 12 : 13,
-                              color: printMode ? "#333" : "#a09880",
-                              lineHeight: 1.7, fontFamily: "Georgia, serif",
-                              borderTop: `1px solid ${printMode ? "#eee" : "#222"}`,
-                              paddingTop: 8,
-                              whiteSpace: "pre-wrap",
-                              wordWrap: "break-word",
-                              overflow: "visible",
-                            }}>
-                              {event.body}
-                              
-                              {/* Related Events Section */}
-                              {!printMode && relatedEvents.length > 0 && (
+                            <>
+                              <div style={{
+                                fontSize: printMode ? 12 : 13, color: printMode ? "#333" : "#a09880",
+                                lineHeight: 1.7, fontFamily: "Georgia, serif",
+                                borderTop: `1px solid ${printMode ? "#eee" : "#222"}`,
+                                paddingTop: 8, whiteSpace: "pre-line",
+                              }}>
+                                {event.body}
+                              </div>
+
+                              {/* Related Events */}
+                              {event.related && event.related.length > 0 && (
                                 <div style={{
                                   marginTop: 12,
-                                  paddingTop: 12,
-                                  borderTop: `1px solid ${cat.color}33`,
+                                  paddingTop: 10,
+                                  borderTop: `1px solid ${printMode ? "#eee" : "#1e1c18"}`,
                                 }}>
                                   <div style={{
-                                    fontSize: 10,
-                                    color: "#5a5550",
-                                    letterSpacing: "0.1em",
-                                    textTransform: "uppercase",
-                                    marginBottom: 8,
-                                  }}>
-                                    🔗 Related Events
-                                  </div>
+                                    fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
+                                    color: printMode ? "#aaa" : "#4a4540", marginBottom: 7, fontFamily: "Georgia, serif",
+                                  }}>Related Events</div>
                                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                                    {relatedEvents.map(related => {
-                                      const relCat = CATEGORIES[related.category];
+                                    {event.related.map(relId => {
+                                      const rel = eventMap[relId];
+                                      if (!rel) return null;
+                                      const relCat = CATEGORIES[rel.category];
                                       return (
                                         <button
-                                          key={related.id}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRelatedClick(related.id);
-                                          }}
+                                          key={relId}
+                                          className="related-chip"
+                                          onClick={(e) => { e.stopPropagation(); jumpToEvent(relId); }}
                                           style={{
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            gap: 5,
-                                            padding: "4px 10px",
-                                            background: "transparent",
-                                            border: `1.5px solid ${relCat.color}66`,
-                                            borderRadius: 16,
-                                            color: relCat.color,
-                                            fontSize: 11,
-                                            fontFamily: "Georgia, serif",
-                                            cursor: "pointer",
-                                            transition: "all 0.15s ease",
-                                            fontWeight: 500,
-                                            whiteSpace: "nowrap",
-                                          }}
-                                          onMouseEnter={(e) => {
-                                            e.currentTarget.style.borderColor = relCat.color + "cc";
-                                            e.currentTarget.style.background = relCat.bg;
-                                            e.currentTarget.style.boxShadow = `0 0 8px ${relCat.color}33`;
-                                          }}
-                                          onMouseLeave={(e) => {
-                                            e.currentTarget.style.borderColor = relCat.color + "66";
-                                            e.currentTarget.style.background = "transparent";
-                                            e.currentTarget.style.boxShadow = "none";
+                                            display: "inline-flex", alignItems: "center", gap: 5,
+                                            padding: "4px 10px", borderRadius: 4,
+                                            border: `1px solid ${relCat.color}55`,
+                                            background: printMode ? `${relCat.color}12` : `${relCat.color}18`,
+                                            color: printMode ? "#333" : relCat.color,
+                                            fontSize: 11, cursor: printMode ? "default" : "pointer",
+                                            fontFamily: "Georgia, serif", textAlign: "left",
+                                            transition: "all 0.12s", lineHeight: 1.3,
+                                            pointerEvents: printMode ? "none" : "auto",
                                           }}
                                         >
-                                          <span style={{ fontSize: 9, opacity: 0.8 }}>
-                                            {related.period}
+                                          <span style={{
+                                            width: 6, height: 6, borderRadius: "50%",
+                                            background: relCat.color, flexShrink: 0,
+                                            display: "inline-block",
+                                          }} />
+                                          <span style={{ color: printMode ? "#888" : relCat.color+"99", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                                            {rel.year}
                                           </span>
-                                          <span style={{ fontSize: 9, opacity: 0.6 }}>•</span>
-                                          <span style={{ fontWeight: 600 }}>
-                                            {related.title.substring(0, 35).replace(/—.*/, "").trim()}
-                                            {related.title.length > 35 ? "…" : ""}
-                                          </span>
+                                          <span>{rel.title}</span>
                                         </button>
                                       );
                                     })}
                                   </div>
                                 </div>
                               )}
-                            </div>
+                            </>
                           )}
                         </div>
                       </div>
@@ -475,7 +453,7 @@
             paddingTop: printMode ? 20 : 32,
           }}>
             <p style={{ fontSize: 11, color: printMode ? "#888" : "#3a3530", fontStyle: "italic", lineHeight: 1.6 }}>
-              This document is confidential and intended solely for use in clinical therapy sessions. It represents a collaborative personal account and does not constitute a complete or legally binding [...]
+              This document is confidential and intended solely for use in clinical therapy sessions. It represents a collaborative personal account and does not constitute a complete or legally binding record. {events.length} events documented spanning 2013–2026.
             </p>
           </div>
         </div>
