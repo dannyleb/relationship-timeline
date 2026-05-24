@@ -8,16 +8,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0e0d0c; }
-    .related-chip:hover { opacity: 0.8; transform: translateY(-1px); }
-    .event-card:hover { border-color: #333 !important; }
-    @keyframes highlight-pulse {
-      0%   { box-shadow: 0 0 0 0 rgba(200,180,140,0.5); }
-      50%  { box-shadow: 0 0 0 6px rgba(200,180,140,0.15); }
-      100% { box-shadow: 0 0 0 0 rgba(200,180,140,0); }
+    body { 
+      background: #f8f7f6; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .highlight-flash { animation: highlight-pulse 0.9s ease-out; }
+    .related-chip:hover { opacity: 0.7; }
+    .event-card:hover { border-color: #d0ccc8 !important; }
     @media print {
       body { background: #fff !important; }
       .no-print { display: none !important; }
@@ -209,34 +208,34 @@
 
       return (
         <div style={{
-          fontFamily: "'Georgia', 'Times New Roman', serif",
-          background: printMode ? "#fff" : "#0e0d0c",
-          color: printMode ? "#111" : "#d4cfc8",
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          background: printMode ? "#fff" : "#f8f7f6",
+          color: printMode ? "#222" : "#333",
           minHeight: "100vh",
           padding: printMode ? "32px 40px" : "0",
         }}>
 
           {/* Header */}
           <div style={{
-            background: printMode ? "transparent" : "#141310",
-            borderBottom: printMode ? "2px solid #111" : "1px solid #2a2720",
-            padding: printMode ? "0 0 24px 0" : "28px 40px 20px",
+            background: printMode ? "transparent" : "#ffffff",
+            borderBottom: printMode ? "2px solid #e0e0e0" : "1px solid #e8e8e8",
+            padding: printMode ? "0 0 24px 0" : "24px 40px 16px",
             position: printMode ? "static" : "sticky",
             top: 0, zIndex: 100,
           }}>
             <div style={{ maxWidth: 860, margin: "0 auto" }}>
               {!printMode && (
-                <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#5a5550", marginBottom: 6 }}>
-                  Relationship Timeline — Confidential
+                <div style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#999", marginBottom: 4 }}>
+                  Relationship Timeline
                 </div>
               )}
               <h1 style={{
-                fontFamily: "'Georgia', serif", fontStyle: "italic", fontWeight: 400,
-                fontSize: printMode ? 28 : 24, color: printMode ? "#111" : "#e8e2d8",
-                margin: "0 0 4px 0", letterSpacing: "-0.01em",
+                fontFamily: "'Inter', sans-serif", fontStyle: "normal", fontWeight: 700,
+                fontSize: printMode ? 32 : 28, color: printMode ? "#111" : "#1a1a1a",
+                margin: "0 0 8px 0", letterSpacing: "-0.02em",
               }}>Danny &amp; Nikki</h1>
-              <div style={{ fontSize: 12, color: printMode ? "#444" : "#6a6258", fontStyle: "italic" }}>
-                2013 – Present &middot; {events.length} events documented
+              <div style={{ fontSize: 14, color: printMode ? "#666" : "#888", fontWeight: 400 }}>
+                2013 – Present • {events.length} events documented
               </div>
 
               {!printMode && (
@@ -247,32 +246,32 @@
                     const active = activeFilters.includes(cat);
                     return (
                       <button key={cat} onClick={() => toggleFilter(cat)} style={{
-                        padding: "3px 10px", borderRadius: 20,
-                        border: `1px solid ${active ? c.color : "#333"}`,
+                        padding: "6px 12px", borderRadius: 6,
+                        border: `1px solid ${active ? c.color : "#ddd"}`,
                         background: active ? c.bg : "transparent",
                         color: active ? c.color : "#666",
-                        fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif", transition: "all 0.15s",
+                        fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 0.2s",
                       }}>{c.label}</button>
                     );
                   })}
                   {activeFilters.length > 0 && (
                     <button onClick={() => setActiveFilters([])} style={{
-                      padding: "3px 10px", borderRadius: 20, border: "1px solid #444",
-                      background: "transparent", color: "#888", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
+                      padding: "6px 12px", borderRadius: 6, border: "1px solid #ddd",
+                      background: "transparent", color: "#999", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "Inter, sans-serif",
                     }}>Clear</button>
                   )}
                   <button onClick={() => { setExpandedIds(new Set(events.map(e=>e.id))); }} style={{
-                    padding: "3px 10px", borderRadius: 20, border: "1px solid #3a3530",
-                    background: "transparent", color: "#7a7060", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
+                    padding: "6px 12px", borderRadius: 6, border: "1px solid #ddd",
+                    background: "transparent", color: "#666", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "Inter, sans-serif",
                   }}>Expand All</button>
                   <button onClick={() => setExpandedIds(new Set())} style={{
-                    padding: "3px 10px", borderRadius: 20, border: "1px solid #3a3530",
-                    background: "transparent", color: "#7a7060", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
+                    padding: "6px 12px", borderRadius: 6, border: "1px solid #ddd",
+                    background: "transparent", color: "#666", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "Inter, sans-serif",
                   }}>Collapse All</button>
                   <button onClick={() => setPrintMode(true)} style={{
-                    marginLeft: "auto", padding: "4px 14px", borderRadius: 4,
-                    border: "1px solid #3a3530", background: "#1e1c18",
-                    color: "#a09880", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
+                    marginLeft: "auto", padding: "6px 14px", borderRadius: 6,
+                    border: "1px solid #ddd", background: "#f0f0f0",
+                    color: "#333", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "Inter, sans-serif",
                   }}>Print / PDF View</button>
                 </div>
               )}
@@ -280,12 +279,12 @@
               {printMode && (
                 <div style={{ marginTop: 12 }}>
                   <button onClick={() => setPrintMode(false)} style={{
-                    padding: "6px 16px", border: "1px solid #999", background: "transparent",
-                    color: "#333", fontSize: 11, cursor: "pointer", marginRight: 8, fontFamily: "Georgia, serif",
+                    padding: "8px 16px", border: "1px solid #ddd", background: "transparent",
+                    color: "#666", fontSize: 12, fontWeight: 500, cursor: "pointer", marginRight: 8, fontFamily: "Inter, sans-serif",
                   }}>← Back</button>
                   <button onClick={() => window.print()} style={{
-                    padding: "6px 16px", border: "1px solid #333", background: "#111",
-                    color: "#fff", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif",
+                    padding: "8px 16px", border: "1px solid #ddd", background: "#333",
+                    color: "#fff", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "Inter, sans-serif",
                   }}>Print / Save PDF</button>
                 </div>
               )}
@@ -312,11 +311,11 @@
               <div key={year} style={{ marginBottom: printMode ? 24 : 40 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: printMode ? 12 : 20 }}>
                   <div style={{
-                    fontFamily: "Georgia, serif", fontWeight: 700,
-                    fontSize: printMode ? 20 : 22, color: printMode ? "#111" : "#f0ebe0",
+                    fontFamily: "Inter, sans-serif", fontWeight: 600,
+                    fontSize: printMode ? 20 : 20, color: printMode ? "#111" : "#1a1a1a",
                     letterSpacing: "-0.02em", minWidth: 60,
                   }}>{year}</div>
-                  <div style={{ flex: 1, height: 1, background: printMode ? "#ccc" : "#2a2720" }} />
+                  <div style={{ flex: 1, height: 1, background: printMode ? "#ddd" : "#e8e8e8" }} />
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: printMode ? 10 : 12, paddingLeft: printMode ? 0 : 8 }}>
@@ -334,9 +333,9 @@
                             <div style={{
                               width: 10, height: 10, borderRadius: "50%",
                               background: cat.color, marginTop: 14, flexShrink: 0,
-                              boxShadow: `0 0 8px ${cat.color}44`,
+                              boxShadow: `0 0 0 3px ${cat.color}22`,
                             }} />
-                            <div style={{ width: 1, flex: 1, background: "#2a2720", marginTop: 4, minHeight: 16 }} />
+                            <div style={{ width: 1, flex: 1, background: "#e8e8e8", marginTop: 4, minHeight: 16 }} />
                           </div>
                         )}
 
@@ -344,13 +343,14 @@
                           className="event-card"
                           style={{
                             flex: 1,
-                            border: printMode ? `1px solid ${cat.color}66` : `1px solid ${isExpanded ? cat.color+"44" : "#222"}`,
+                            border: printMode ? `1px solid ${cat.color}44` : `1px solid ${isExpanded ? cat.color+"33" : "#ddd"}`,
                             borderLeft: `3px solid ${cat.color}`,
-                            borderRadius: printMode ? 4 : 6,
-                            padding: printMode ? "10px 14px" : "12px 16px",
-                            background: printMode ? "#fff" : (isExpanded ? cat.bg : "#141310"),
-                            transition: "all 0.15s",
+                            borderRadius: 8,
+                            padding: printMode ? "12px 16px" : "14px 18px",
+                            background: printMode ? "#fff" : (isExpanded ? cat.bg : "#ffffff"),
+                            transition: "all 0.2s ease",
                             pageBreakInside: "avoid", breakInside: "avoid",
+                            cursor: printMode ? "default" : "pointer",
                           }}
                         >
                           {/* Card header — clickable to expand */}
@@ -359,18 +359,18 @@
                             style={{ cursor: printMode ? "default" : "pointer", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: isExpanded ? 8 : 0 }}
                           >
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: printMode ? 11 : 10, color: printMode ? "#888" : "#5a5550", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>
+                              <div style={{ fontSize: printMode ? 11 : 12, color: printMode ? "#999" : "#999", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 5, fontWeight: 500 }}>
                                 {event.period}
                               </div>
-                              <div style={{ fontFamily: "Georgia, serif", fontSize: printMode ? 13 : 14, fontWeight: 600, color: printMode ? "#111" : "#e8e2d8", lineHeight: 1.3 }}>
+                              <div style={{ fontFamily: "Inter, sans-serif", fontSize: printMode ? 14 : 15, fontWeight: 600, color: printMode ? "#111" : "#1a1a1a", lineHeight: 1.3 }}>
                                 {event.title}
                               </div>
                             </div>
-                            <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                              <span style={{ fontSize: 10, color: cat.color, background: printMode ? `${cat.color}18` : cat.bg, padding: "2px 7px", borderRadius: 3, letterSpacing: "0.08em" }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+                              <span style={{ fontSize: 11, color: cat.color, background: printMode ? `${cat.color}18` : cat.bg, padding: "4px 10px", borderRadius: 4, letterSpacing: "0.06em", fontWeight: 500 }}>
                                 {cat.label}
                               </span>
-                              {!printMode && <span style={{ color: "#444", fontSize: 12 }}>{isExpanded ? "▲" : "▼"}</span>}
+                              {!printMode && <span style={{ color: "#999", fontSize: 12 }}>{isExpanded ? "▲" : "▼"}</span>}
                             </div>
                           </div>
 
@@ -378,10 +378,10 @@
                           {isExpanded && (
                             <>
                               <div style={{
-                                fontSize: printMode ? 12 : 13, color: printMode ? "#333" : "#a09880",
-                                lineHeight: 1.7, fontFamily: "Georgia, serif",
-                                borderTop: `1px solid ${printMode ? "#eee" : "#222"}`,
-                                paddingTop: 8, whiteSpace: "pre-line",
+                                fontSize: printMode ? 13 : 14, color: printMode ? "#333" : "#555",
+                                lineHeight: 1.7, fontFamily: "Inter, -apple-system, sans-serif",
+                                borderTop: `1px solid ${printMode ? "#eee" : "#e8e8e8"}`,
+                                paddingTop: 10, whiteSpace: "pre-wrap", wordBreak: "break-word",
                               }}>
                                 {event.body}
                               </div>
@@ -391,11 +391,11 @@
                                 <div style={{
                                   marginTop: 12,
                                   paddingTop: 10,
-                                  borderTop: `1px solid ${printMode ? "#eee" : "#1e1c18"}`,
+                                  borderTop: `1px solid ${printMode ? "#eee" : "#e8e8e8"}`,
                                 }}>
                                   <div style={{
-                                    fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
-                                    color: printMode ? "#aaa" : "#4a4540", marginBottom: 7, fontFamily: "Georgia, serif",
+                                    fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
+                                    color: printMode ? "#aaa" : "#999", marginBottom: 8, fontFamily: "Inter, sans-serif", fontWeight: 600,
                                   }}>Related Events</div>
                                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                                     {event.related.map(relId => {
@@ -449,10 +449,10 @@
           <div style={{
             maxWidth: 860, margin: "0 auto",
             padding: printMode ? "20px 0 0" : "0 40px 60px",
-            borderTop: printMode ? "1px solid #ccc" : "1px solid #1e1c18",
+            borderTop: printMode ? "1px solid #e0e0e0" : "1px solid #e8e8e8",
             paddingTop: printMode ? 20 : 32,
           }}>
-            <p style={{ fontSize: 11, color: printMode ? "#888" : "#3a3530", fontStyle: "italic", lineHeight: 1.6 }}>
+            <p style={{ fontSize: 12, color: printMode ? "#888" : "#999", fontStyle: "normal", lineHeight: 1.6, fontFamily: "Inter, sans-serif" }}>
               This document is confidential and intended solely for use in clinical therapy sessions. It represents a collaborative personal account and does not constitute a complete or legally binding record. {events.length} events documented spanning 2013–2026.
             </p>
           </div>
