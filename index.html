@@ -20,7 +20,7 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    const { useState } = React;
+    const { useState, useRef, useEffect } = React;
 
     const CATEGORIES = {
       MILESTONE: { label: "Milestone", color: "#7eb8a4", bg: "rgba(126,184,164,0.12)" },
@@ -161,6 +161,7 @@
       const [activeFilters, setActiveFilters] = useState([]);
       const [expandedId, setExpandedId] = useState(null);
       const [printMode, setPrintMode] = useState(false);
+      const eventRefs = useRef({});
 
       const toggleFilter = (cat) => {
         setActiveFilters(prev =>
@@ -177,6 +178,19 @@
         if (evs.length > 0) acc[year] = evs;
         return acc;
       }, {});
+
+      const handleRelatedClick = (relatedId) => {
+        // Expand the related event
+        setExpandedId(relatedId);
+        
+        // Scroll to it after a brief delay to allow React to render
+        setTimeout(() => {
+          const element = eventRefs.current[relatedId];
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 50);
+      };
 
       return (
         <div style={{
@@ -310,7 +324,10 @@
                     const relatedEvents = isExpanded ? findRelatedEvents(event.id, event.title, event.body) : [];
                     
                     return (
-                      <div key={event.id} onClick={() => !printMode && setExpandedId(isExpanded ? null : event.id)}
+                      <div 
+                        key={event.id} 
+                        ref={el => eventRefs.current[event.id] = el}
+                        onClick={() => !printMode && setExpandedId(isExpanded ? null : event.id)}
                         style={{ display: "flex", gap: 0, cursor: printMode ? "default" : "pointer" }}>
 
                         {!printMode && (
@@ -384,7 +401,7 @@
                                           key={related.id}
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            setExpandedId(related.id);
+                                            handleRelatedClick(related.id);
                                           }}
                                           style={{
                                             display: "inline-flex",
